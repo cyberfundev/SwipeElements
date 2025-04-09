@@ -1,5 +1,7 @@
 using Codebase.Gameplay.LevelGenerator;
+using Codebase.Gameplay.LevelManager;
 using Codebase.Gameplay.Props;
+using Codebase.UI;
 using UnityEngine;
 using Zenject;
 
@@ -9,6 +11,7 @@ namespace Codebase.Structure
     {
         [SerializeField] private PropsConfig _propsConfig;
         [SerializeField] private Transform _propsParent;
+        [SerializeField] private LoosePopup _loosePopup;
         public override void InstallBindings()
         {
             Container.Bind<PropsContainer>().AsCached();
@@ -21,6 +24,7 @@ namespace Codebase.Structure
 
             Container.BindInstance(_propsConfig);
             Container.BindInstance(_propsParent);
+            Container.BindInstance(_loosePopup);
         }
     }
 }

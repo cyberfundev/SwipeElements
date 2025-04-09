@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using Codebase.Gameplay.LevelManager;
 using Codebase.Levels;
 using Codebase.Profiles;
 using Cysharp.Threading.Tasks;

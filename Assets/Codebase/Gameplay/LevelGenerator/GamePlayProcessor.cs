@@ -51,7 +51,7 @@ namespace Codebase.Gameplay.LevelGenerator
 
             List<Prop> propsToMove = _gridAnalyser.UpdatePositions();
 
-            while (propsToMove.Count > 0)
+            do
             {
                 if (propsToMove.Count > 0)
                 {
@@ -72,7 +72,7 @@ namespace Codebase.Gameplay.LevelGenerator
                 SetPropsInteractable(propsToMove, true);
 
                 propsToMove = _gridAnalyser.UpdatePositions();
-            }
+            } while (propsToMove.Count > 0);
 
             CheckLevelState();
         }

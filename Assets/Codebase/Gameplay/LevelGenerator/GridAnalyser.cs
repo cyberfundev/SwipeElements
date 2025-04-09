@@ -86,42 +86,11 @@ namespace Codebase.Gameplay.LevelGenerator
             int cols = Props.GetLength(1);
             List<Prop> destroyables = new List<Prop>();
 
-            void AddNeighbors(int x, int y)
-            {
-                for (int dr = -1; dr <= 1; dr++)
-                {
-                    for (int dc = -1; dc <= 1; dc++)
-                    {
-                        if (Math.Abs(dr) + Math.Abs(dc) == 1)
-                        {
-                            int nr = x + dr, nc = y + dc;
-                            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols)
-                            {
-                                if (Props[nr, nc]?.PropId == Props[x, y]?.PropId)
-                                {
-                                    destroyables.Add(Props[nr, nc]);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
             for (int r = 0; r < rows; r++)
             {
                 for (int c = 0; c < cols - 2; c++)
                 {
-                    if (Props[r, c]?.PropId == Props[r, c + 1]?.PropId && Props[r, c]?.PropId == Props[r, c + 2]?.PropId)
-                    {
-                        for (int i = 0; i < 3; i++)
-                        {
-                            destroyables.Add(Props[r, c + i]);
-                        }
-
-                        AddNeighbors(r, c);
-                        AddNeighbors(r, c + 1);
-                        AddNeighbors(r, c + 2);
-                    }
+                    CompareProps(destroyables, new Vector2Int[] {new(r, c), new(r, c + 1), new(r, c + 2), }, rows, cols);
                 }
             }
 
@@ -129,22 +98,7 @@ namespace Codebase.Gameplay.LevelGenerator
             {
                 for (int r = 0; r < rows - 2; r++)
                 {
-                    if (Props[r, c] == null)
-                    {
-                        continue;
-                    }
-                    
-                    if (Props[r, c]?.PropId == Props[r + 1, c]?.PropId && Props[r, c]?.PropId == Props[r + 2, c]?.PropId)
-                    {
-                        for (int i = 0; i < 3; i++)
-                        {
-                            destroyables.Add(Props[r + i, c]);
-                        }
-
-                        AddNeighbors(r, c);
-                        AddNeighbors(r + 1, c);
-                        AddNeighbors(r + 2, c);
-                    }
+                    CompareProps(destroyables, new Vector2Int[] {new(r, c), new(r + 1, c), new(r + 2, c), }, rows, cols);
                 }
             }
 
@@ -154,8 +108,10 @@ namespace Codebase.Gameplay.LevelGenerator
             {
                 Props[destroyables[i].Position.x, destroyables[i].Position.y] = null;
             }
-            
+
             return destroyables;
+
+            
         }
 
         public List<Prop> UpdatePositions()
@@ -187,12 +143,55 @@ namespace Codebase.Gameplay.LevelGenerator
         {
             var targetPos = swipedPropPosition + direction;
 
-            if (targetPos.x < 0 || targetPos.x >= Props.Length || targetPos.y < 0 || targetPos.y >= Props.Length)
+            if (targetPos.x < 0 || targetPos.x >= Props.GetLength(0) || targetPos.y < 0 || targetPos.y >= Props.GetLength(1))
             {
                 return false;
             }
 
             return targetPos.y <= swipedPropPosition.y || Props[targetPos.x, targetPos.y] != null;
+        }
+
+        private void CompareProps(List<Prop> destroyables, Vector2Int[] positions, int rows, int cols)
+        {
+            if (Props[positions[0].x, positions[0].y] == null)
+            {
+                return;
+            }
+
+            foreach (var pos in positions)
+            {
+                if (Props[positions[0].x, positions[0].y]?.PropId != Props[pos.x, pos.y]?.PropId)
+                {
+                    return;
+                }
+            }
+
+            foreach (var pos in positions)
+            {
+                destroyables.Add(Props[pos.x, pos.y]);
+                AddNeighbors(pos.x, pos.y, rows, cols, destroyables);
+            }
+        }
+        
+        private void AddNeighbors(int x, int y, int rows, int cols, List<Prop> destroyables)
+        {
+            for (int dr = -1; dr <= 1; dr++)
+            {
+                for (int dc = -1; dc <= 1; dc++)
+                {
+                    if (Math.Abs(dr) + Math.Abs(dc) != 1) continue;
+
+                    int analyzedRow = x + dr;
+                    int analyzedCol = y + dc;
+                    if (analyzedRow >= 0 && analyzedRow < rows && analyzedCol >= 0 && analyzedCol < cols)
+                    {
+                        if (Props[analyzedRow, analyzedCol]?.PropId == Props[x, y]?.PropId)
+                        {
+                            destroyables.Add(Props[analyzedRow, analyzedCol]);
+                        }
+                    }
+                }
+            }
         }
     }
 }
