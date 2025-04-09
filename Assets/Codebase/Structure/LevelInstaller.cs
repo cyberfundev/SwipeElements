@@ -22,8 +22,8 @@ namespace Codebase.Structure
             Container.Bind<GridAnalyser>().AsCached();
             Container.Bind<GridView>().AsCached();
             Container.Bind<LevelResizer>().AsCached();
-            Container.Bind<GamePlayProcessor>().AsCached();
 
+            Container.BindInterfacesAndSelfTo<GamePlayProcessor>().AsCached();
             Container.BindInterfacesAndSelfTo<LevelManager>().AsCached();
 
             Container.BindInstance(_propsConfig);

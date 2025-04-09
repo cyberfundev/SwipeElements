@@ -18,8 +18,8 @@ namespace Codebase.Structure
         private readonly DiContainer _diContainer;
         private readonly CanvasGroup _loadingScreen;
         private readonly PlayerProfile _playerProfile;
-        private CameraResizer _cameraResizer;
-        private Camera _mainCamera;
+        private readonly CameraResizer _cameraResizer;
+        private readonly Camera _mainCamera;
 
         public AppStarter(LevelsService levelsService, ProfileService profileService, DiContainer diContainer,
             CanvasGroup loadingScreen, PlayerProfile playerProfile, CameraResizer cameraResizer, Camera mainCamera)
@@ -44,62 +44,44 @@ namespace Codebase.Structure
         {
             await _profileService.InitializeAsync();
             await _levelsService.InitializeAsync();
+            
+            int loadedLevelsAmount = await _levelsService.UpdateLevelsIfNeed(_playerProfile.CurrentLevelsAmount);
 
-            // CreateLevels();
+            _levelsService.RepeatMode = _playerProfile.CurrentLevel >= loadedLevelsAmount;
 
-            _playerProfile.CurrentLevelsAmount =
-                await _levelsService.UpdateLevelsIfNeed(_playerProfile.CurrentLevelsAmount);
-            _levelsService.RepeatMode = _playerProfile.CurrentLevel >= _playerProfile.CurrentLevelsAmount;
+            if (loadedLevelsAmount > _playerProfile.CurrentLevelsAmount)
+            {
+                _playerProfile.CurrentRepeatLevel = 0;
+                _playerProfile.SavedLevelState = null;
+            }
+            
+            _playerProfile.CurrentLevelsAmount = loadedLevelsAmount;
 
             StartLevel().Forget();
         }
 
-        // private void CreateLevels()
-        // {
-        //     Level level1 = new Level(new List<List<Prop>>
-        //     {
-        //         new() { new Prop { PropId = 1 }, new Prop { PropId = 1 } },
-        //         new() { null, null, },
-        //         new() { new() { PropId = 1 }, new() { PropId = 2 } },
-        //         new() { new() { PropId = 2 }, null },
-        //         new() { new() { PropId = 2 }, null },
-        //     });
-        //     
-        //     Level level2 = new Level(new List<List<Prop>>
-        //     {
-        //         new() { new() { PropId = 1 }, new() { PropId = 1 }, new() { PropId = 2 }, new() { PropId = 1 }, new() { PropId = 1 } },
-        //         new() { new() { PropId = 2 }, new() { PropId = 2 }, new() { PropId = 1 }, new() { PropId = 2 }, new() { PropId = 1 } },
-        //         new() { new() { PropId = 1 }, new() { PropId = 1 }, new() { PropId = 2 }, new() { PropId = 1 }, null }, 
-        //         new() { new() { PropId = 1 }, new() { PropId = 1 }, new() { PropId = 2 }, new() { PropId = 1 }, null },
-        //     });
-        //     
-        //     Level level3 = new Level(new List<List<Prop>>
-        //     {
-        //         new () { new() { PropId = 1 }, new() { PropId = 1 }, new() { PropId = 2 }, new() { PropId = 1 }, new() { PropId = 1 }, null },
-        //         new () { new() { PropId = 2 }, new() { PropId = 2 }, new() { PropId = 1 }, new() { PropId = 1 }, new() { PropId = 2 }, new() { PropId = 1 } },
-        //         new () { new() { PropId = 1 }, new() { PropId = 1 }, new() { PropId = 2 }, null, null, null },
-        //         new () { new() { PropId = 1 }, new() { PropId = 1 }, new() { PropId = 2 }, new() { PropId = 1 }, null, null },
-        //     });
-        //
-        //
-        //     _levelsService.SaveLevel(level1, 0);
-        //     _levelsService.SaveLevel(level2, 1);
-        //     _levelsService.SaveLevel(level3, 2);
-        // }
-
         private async UniTaskVoid StartLevel()
         {
-            int levelNumber = _levelsService.RepeatMode
-                ? _playerProfile.CurrentRepeatLevel
-                : _playerProfile.CurrentLevel;
-            var module =
-                await PlayModule<LevelModule, LevelArgs>("LevelScene",
-                    new LevelArgs(_levelsService.GetLevel(levelNumber)));
+            Level currentLevel;
 
+            if (_playerProfile.SavedLevelState == null)
+            {
+                int levelNumber = _levelsService.RepeatMode
+                    ? _playerProfile.CurrentRepeatLevel
+                    : _playerProfile.CurrentLevel;
+                currentLevel = _levelsService.GetLevel(levelNumber);
+            }
+            else
+            {
+                currentLevel = _playerProfile.SavedLevelState;
+            }
+
+            var module = await PlayModule<LevelModule, LevelArgs>("LevelScene", new LevelArgs(currentLevel));
             switch (module.Result)
             {
                 case LevelResult.Restart:
                 case LevelResult.Win:
+                    _playerProfile.SavedLevelState = null;
                     StartLevel().Forget();
                     break;
                 case LevelResult.Next:

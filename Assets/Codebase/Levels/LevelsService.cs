@@ -40,31 +40,27 @@ namespace Codebase.Levels
                 Directory.CreateDirectory(_levelsPath);
             }
 
-            if (CanLoadNewLevels(levelsAmount))
+            var result = await CanLoadNewLevels(levelsAmount);
+            if (result.Item1)
             {
                 RepeatMode = false;
 
-                return await LoadDefaultLevels();
+                return await LoadDefaultLevels(result.Item2);
             }
 
             return levelsAmount;
         }
 
-        private async UniTask<int> LoadDefaultLevels()
+        private async UniTask<int> LoadDefaultLevels(int levelsAmount)
         {
             StringBuilder stringBuilder = new StringBuilder();
 
             int levelIndex = 0;
-            for (; levelIndex < int.MaxValue; levelIndex++)
+            for (; levelIndex < levelsAmount; levelIndex++)
             {
                 stringBuilder.Clear();
                 stringBuilder.Append("Levels/");
                 stringBuilder.Append(GetFileName(levelIndex + 1));
-
-                if (!StreamingAssetsService.Exists(stringBuilder.ToString()))
-                {
-                    break;
-                }
 
                 await StreamingAssetsService.ExtractFromStreamingAssets(stringBuilder.ToString(),
                     _levelsPath + GetFileName(levelIndex + 1));
@@ -78,12 +74,19 @@ namespace Codebase.Levels
             return $"Level{id}.json";
         }
 
-        private bool CanLoadNewLevels(int oldLevelsAmount)
+        private async UniTask<(bool, int)> CanLoadNewLevels(int oldLevelsAmount)
         {
-            string assetPath = $"/Levels/{GetFileName(oldLevelsAmount + 1)}";
-            return StreamingAssetsService.Exists(assetPath);
+            string levelsPath = _levelsPath + "LevelsConfig.json";
+            await StreamingAssetsService.ExtractFromStreamingAssets("Levels/LevelsConfig.json", levelsPath);
+            int levelsAmount = File.ReadAllText(levelsPath).ToDeserialized<LevelsInfo>().LevelsAmount;
+            return (levelsAmount > oldLevelsAmount, levelsAmount);
         }
 
         protected override string LogTag { get; }
+    }
+
+    public class LevelsInfo
+    {
+        public int LevelsAmount { get; set; }
     }
 }

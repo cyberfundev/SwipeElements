@@ -22,21 +22,21 @@ namespace Codebase.Gameplay.LevelGenerator
             _gridAnalyser = gridAnalyser;
         }
 
-        public async UniTask AnimateSwipe(Prop swipePair, Prop prop)
+        public async UniTask AnimateSwipe(Prop swipePair, Prop prop, Vector2Int pairPos, Vector2Int mainPos)
         {
             if (swipePair != null)
             {
-                AlignToPos(swipePair);
+                AlignToPos(swipePair, pairPos);
             }
 
-            var tween = AlignToPos(prop);
+            var tween = AlignToPos(prop, mainPos);
             await tween.AsyncWaitForCompletion();
         }
 
-        private TweenerCore<Vector3, Vector3, VectorOptions> AlignToPos(Prop swipePair)
+        private TweenerCore<Vector3, Vector3, VectorOptions> AlignToPos(Prop swipePair, Vector2Int vector2Int)
         {
             return _propsContainer.Props[swipePair].transform
-                .DOLocalMove(new Vector3(swipePair.Position.x, swipePair.Position.y), _swipeTime);
+                .DOLocalMove(new Vector3(vector2Int.x, vector2Int.y), _swipeTime);
         }
 
         public async UniTask AnimateDestroyObjects(List<Prop> propsToDestroy)
@@ -52,13 +52,13 @@ namespace Codebase.Gameplay.LevelGenerator
             await UniTask.Delay(TimeSpan.FromSeconds(destroyTime));
         }
 
-        public async UniTask AlignField(List<Prop> propsToMove)
+        public async UniTask AlignField(List<(Prop prop, Vector2Int pos)> propsToMove)
         {
             Tween tween = null;
-            foreach (Prop prop in propsToMove)
+            foreach ((Prop prop, Vector2Int pos) propInfo in propsToMove)
             {
-                var propObject = _propsContainer.Props[prop];
-                tween = propObject.transform.DOLocalMoveY(prop.Position.y, _swipeTime);
+                var propObject = _propsContainer.Props[propInfo.prop];
+                tween = propObject.transform.DOLocalMoveY(propInfo.pos.y, _swipeTime);
             }
 
             if (tween != null)

@@ -28,7 +28,8 @@ namespace Codebase.Gameplay.LevelManager
         private enum LevelState
         {
             Idle,
-            WaitingCompleteAnimation,
+            LostWaitingAnimation,
+            WonWaitingAnimation,
             Completed,
         }
 
@@ -71,13 +72,9 @@ namespace Codebase.Gameplay.LevelManager
                 .Where(_ => _levelState is LevelState.Idle)
                 .Subscribe(_ => StartWaitLevelEndAnimate(false))
                 .AddTo(_disposables);
-            _gamePlayProcessor.OnCompleted
-                .Where(_ => _levelState is LevelState.WaitingCompleteAnimation)
-                .Subscribe(_ => WinLevel())
-                .AddTo(_disposables);
-            _gamePlayProcessor.OnLost
-                .Where(_ => _levelState is LevelState.WaitingCompleteAnimation)
-                .Subscribe(_ => LooseLevel().Forget())
+            _gamePlayProcessor.OnAnimationsCompleted
+                .Where(_ => _levelState is LevelState.WonWaitingAnimation || _levelState is LevelState.LostWaitingAnimation)
+                .Subscribe(_ => EndLevel())
                 .AddTo(_disposables);
 
             _levelState = LevelState.Idle;
@@ -101,6 +98,8 @@ namespace Codebase.Gameplay.LevelManager
                     levelsService.RepeatMode = true;
                 }
             }
+
+            playerProfile.SavedLevelState = null;
         }
 
         public void Dispose()
@@ -111,11 +110,29 @@ namespace Codebase.Gameplay.LevelManager
 
         private void StartWaitLevelEndAnimate(bool completed)
         {
-            _levelState = LevelState.WaitingCompleteAnimation;
             if (completed)
             {
+                _levelState = LevelState.WonWaitingAnimation;
                 AppendLevelProgress(_levelsService, _playerProfile);
             }
+            else
+            {
+                _levelState = LevelState.LostWaitingAnimation;
+            }
+        }
+
+        private void EndLevel()
+        {
+            if (_levelState is LevelState.WonWaitingAnimation)
+            {
+                WinLevel();
+            }
+            else
+            {
+                LooseLevel().Forget();
+            }
+
+            _levelState = LevelState.Completed;
         }
 
         private void WinLevel()

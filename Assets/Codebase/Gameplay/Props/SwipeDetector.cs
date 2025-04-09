@@ -33,7 +33,6 @@ namespace Codebase.Gameplay.Props
             
             _dragStartPosition ??= Input.mousePosition;
 
-            Debug.Log($"Drag distance {Vector3.Distance(Input.mousePosition, _dragStartPosition.Value)}");
             if (Vector2.Distance(Input.mousePosition, _dragStartPosition.Value) > _dragDistance)
             {
                 Vector2 resultSwipeDirection = (Input.mousePosition - _dragStartPosition.Value).normalized;
@@ -44,7 +43,6 @@ namespace Codebase.Gameplay.Props
                     : resultSwipeDirection.y > 0
                         ? Vector2Int.up
                         : Vector2Int.down;
-                Debug.Log($"result + {vector2Int}");
                 _dragListener.OnNext(vector2Int);
                 _endedDrag = true;
             }

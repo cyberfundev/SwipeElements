@@ -156,7 +156,7 @@ MonoBehaviour:
   _spriteRenderer: {fileID: 8395795263381041514}
   _swipeDetector: {fileID: 5602598941031333955}
   _animator: {fileID: 4797827600708565134}
-  _destroyTime: 0.95
+  _destroyTime: 0.9
 --- !u!114 &5602598941031333955
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -169,7 +169,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4712ba55487b4ce5b9f9e85d31f83f52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dragDistance: 200
+  _dragDistance: 170
 --- !u!61 &3976575827827317363
 BoxCollider2D:
   m_ObjectHideFlags: 0

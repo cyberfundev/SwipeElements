@@ -2,7 +2,6 @@ using System.IO;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.UI;
 
 namespace Core.Helpers
 {
@@ -38,14 +37,17 @@ namespace Core.Helpers
             }
         }
 
-        public static bool Exists(string fileName)
+        public static async UniTask<bool> Exists(string fileName)
         {
             fileName = $"{Application.streamingAssetsPath}/{fileName}";
             switch (Application.platform)
             {
                 case RuntimePlatform.Android:
-                    var request = UnityWebRequest.Get(fileName);
-                    return request.error == null;
+                    using (UnityWebRequest request = UnityWebRequest.Head(fileName))
+                    {
+                        await request.SendWebRequest().ToUniTask();
+                        return string.IsNullOrEmpty(request.error);
+                    }
                 default:
                     return File.Exists(fileName);
             }
