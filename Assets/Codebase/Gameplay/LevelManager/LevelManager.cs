@@ -40,6 +40,7 @@ namespace Codebase.Gameplay.LevelManager
         public void Initialize()
         {
             _playerProfile.SavedLevelState = _levelArgs.Level;
+            
             _gamePlayProcessor.CreateLevel(_levelArgs.Level);
 
             _gamePlayProcessor.OnWinCalculated.Subscribe(_ => AppendLevelProgress(_levelsService, _playerProfile)).AddTo(_disposables);
@@ -52,7 +53,7 @@ namespace Codebase.Gameplay.LevelManager
             if (levelsService.RepeatMode)
             {
                 playerProfile.CurrentRepeatLevel =
-                    playerProfile.CurrentLevelsAmount == playerProfile.CurrentRepeatLevel
+                    playerProfile.CurrentLevelsAmount == playerProfile.CurrentRepeatLevel + 1
                         ? 0
                         : playerProfile.CurrentRepeatLevel + 1;
             }

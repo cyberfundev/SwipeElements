@@ -47,7 +47,7 @@ namespace Codebase.Gameplay.LevelGenerator
                     }
                 }
 
-                return matchesCounter.Any(x => x.Value > 2);
+                return !matchesCounter.Any(x => x.Value > 2);
             }
         }
 

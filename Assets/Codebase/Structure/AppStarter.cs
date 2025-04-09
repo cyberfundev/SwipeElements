@@ -18,10 +18,14 @@ namespace Codebase.Structure
         private readonly DiContainer _diContainer;
         private readonly CanvasGroup _loadingScreen;
         private readonly PlayerProfile _playerProfile;
+        private CameraResizer _cameraResizer;
+        private Camera _mainCamera;
 
         public AppStarter(LevelsService levelsService, ProfileService profileService, DiContainer diContainer,
-            CanvasGroup loadingScreen, PlayerProfile playerProfile)
+            CanvasGroup loadingScreen, PlayerProfile playerProfile, CameraResizer cameraResizer, Camera mainCamera)
         {
+            _mainCamera = mainCamera;
+            _cameraResizer = cameraResizer;
             _playerProfile = playerProfile;
             _loadingScreen = loadingScreen;
             _profileService = profileService;
@@ -31,6 +35,8 @@ namespace Codebase.Structure
 
         public void Initialize()
         {
+            Application.targetFrameRate = 60;
+            _cameraResizer.Initialize(_mainCamera);
             StartApp().Forget();
         }
 

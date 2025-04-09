@@ -9,9 +9,11 @@ namespace Codebase.Gameplay.LevelGenerator
         private readonly PropsConfig _propsConfig;
         private readonly Transform _propsParent;
         private readonly PropsContainer _propsContainer;
+        private LevelResizer _resizer;
 
-        public LevelGenerator(PropsConfig propsConfig, Transform propsParent, PropsContainer propsContainer)
+        public LevelGenerator(PropsConfig propsConfig, Transform propsParent, PropsContainer propsContainer, LevelResizer resizer)
         {
+            _resizer = resizer;
             _propsContainer = propsContainer;
             _propsParent = propsParent;
             _propsConfig = propsConfig;
@@ -29,6 +31,8 @@ namespace Codebase.Gameplay.LevelGenerator
                     }
                 }
             }
+            
+            _resizer.SetupLevel(new Vector2Int(level.Props.GetLength(0), level.Props.GetLength(1)));
         }
 
         private void CreateProp(Prop levelProp, Vector2Int position)

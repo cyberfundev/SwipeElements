@@ -1,6 +1,7 @@
 using Codebase.Gameplay.LevelGenerator;
 using Codebase.Gameplay.LevelManager;
 using Codebase.Gameplay.Props;
+using Codebase.Levels;
 using Codebase.UI;
 using UnityEngine;
 using Zenject;
@@ -18,6 +19,8 @@ namespace Codebase.Structure
             Container.Bind<LevelGenerator>().AsCached();
             Container.Bind<GridAnalyser>().AsCached();
             Container.Bind<GridView>().AsCached();
+            Container.Bind<LevelResizer>().AsCached();
+            Container.Bind<CameraResizer>().AsCached();
             Container.Bind<GamePlayProcessor>().AsCached();
         
             Container.BindInterfacesAndSelfTo<LevelManager>().AsCached();
