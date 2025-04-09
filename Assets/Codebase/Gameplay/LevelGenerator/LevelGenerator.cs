@@ -40,6 +40,7 @@ namespace Codebase.Gameplay.LevelGenerator
             PropObject propObject = Object.Instantiate(_propsConfig.GetPropObject(levelProp.PropId), _propsParent);
             propObject.transform.localPosition = new Vector3(position.x, position.y);
             levelProp.Position = position;
+            levelProp.SetState(Prop.PropState.Idle);
             propObject.Initialize().Forget();
             _propsContainer.RegisterProp(levelProp, propObject);
         }

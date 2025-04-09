@@ -1,3 +1,4 @@
+using Codebase.Gameplay.LevelManager;
 using Codebase.Levels;
 using Codebase.Profiles;
 using Extensions;
@@ -20,6 +21,8 @@ namespace Codebase.Structure
 
             Container.BindInstance(_loadingScreen);
             Container.BindInstance(_mainCamera);
+            
+            Container.Bind<CameraResizer>().AsCached();
 
             Container.BindInterfacesAndSelfTo<AppStarter>().AsCached().NonLazy();
         }

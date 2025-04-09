@@ -90,7 +90,7 @@ namespace Codebase.Gameplay.LevelGenerator
             {
                 for (int c = 0; c < cols - 2; c++)
                 {
-                    CompareProps(destroyables, new Vector2Int[] {new(r, c), new(r, c + 1), new(r, c + 2), }, rows, cols);
+                    CompareProps(destroyables, new Vector2Int[] {new(r, c), new(r, c + 1), new(r, c + 2), });
                 }
             }
 
@@ -98,11 +98,28 @@ namespace Codebase.Gameplay.LevelGenerator
             {
                 for (int r = 0; r < rows - 2; r++)
                 {
-                    CompareProps(destroyables, new Vector2Int[] {new(r, c), new(r + 1, c), new(r + 2, c), }, rows, cols);
+                    CompareProps(destroyables, new Vector2Int[] {new(r, c), new(r + 1, c), new(r + 2, c), });
                 }
             }
 
             destroyables = destroyables.Distinct().ToList();
+
+            for (int x = 0; x < rows; x++)
+            {
+                for (int y = 0; y < cols; y++)
+                {
+                    if (Props[x, y] == null || Props[x, y].State is Prop.PropState.Merging)
+                    {
+                        continue;
+                    }
+
+                    if (HasMergingNeighbours(x, y, rows, cols))
+                    {
+                        Props[x, y].SetState(Prop.PropState.Merging);
+                        destroyables.Add(Props[x, y]);
+                    }
+                }
+            }
 
             for (int i = 0; i < destroyables.Count; i++)
             {
@@ -110,8 +127,6 @@ namespace Codebase.Gameplay.LevelGenerator
             }
 
             return destroyables;
-
-            
         }
 
         public List<Prop> UpdatePositions()
@@ -151,7 +166,7 @@ namespace Codebase.Gameplay.LevelGenerator
             return targetPos.y <= swipedPropPosition.y || Props[targetPos.x, targetPos.y] != null;
         }
 
-        private void CompareProps(List<Prop> destroyables, Vector2Int[] positions, int rows, int cols)
+        private void CompareProps(List<Prop> destroyables, Vector2Int[] positions)
         {
             if (Props[positions[0].x, positions[0].y] == null)
             {
@@ -160,7 +175,7 @@ namespace Codebase.Gameplay.LevelGenerator
 
             foreach (var pos in positions)
             {
-                if (Props[positions[0].x, positions[0].y]?.PropId != Props[pos.x, pos.y]?.PropId)
+                if (Props[positions[0].x, positions[0].y].PropId != Props[pos.x, pos.y]?.PropId)
                 {
                     return;
                 }
@@ -169,11 +184,11 @@ namespace Codebase.Gameplay.LevelGenerator
             foreach (var pos in positions)
             {
                 destroyables.Add(Props[pos.x, pos.y]);
-                AddNeighbors(pos.x, pos.y, rows, cols, destroyables);
+                Props[pos.x, pos.y].SetState(Prop.PropState.Merging);
             }
         }
         
-        private void AddNeighbors(int x, int y, int rows, int cols, List<Prop> destroyables)
+        private bool HasMergingNeighbours(int x, int y, int rows, int cols)
         {
             for (int dr = -1; dr <= 1; dr++)
             {
@@ -185,13 +200,15 @@ namespace Codebase.Gameplay.LevelGenerator
                     int analyzedCol = y + dc;
                     if (analyzedRow >= 0 && analyzedRow < rows && analyzedCol >= 0 && analyzedCol < cols)
                     {
-                        if (Props[analyzedRow, analyzedCol]?.PropId == Props[x, y]?.PropId)
+                        if (Props[analyzedRow, analyzedCol]?.PropId == Props[x, y]?.PropId && Props[analyzedRow, analyzedCol].State is Prop.PropState.Merging)
                         {
-                            destroyables.Add(Props[analyzedRow, analyzedCol]);
+                            return true;
                         }
                     }
                 }
             }
+
+            return false;
         }
     }
 }

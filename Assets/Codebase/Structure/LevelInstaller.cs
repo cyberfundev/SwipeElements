@@ -13,6 +13,8 @@ namespace Codebase.Structure
         [SerializeField] private PropsConfig _propsConfig;
         [SerializeField] private Transform _propsParent;
         [SerializeField] private LoosePopup _loosePopup;
+        [SerializeField] private LevelUI _levelUI;
+
         public override void InstallBindings()
         {
             Container.Bind<PropsContainer>().AsCached();
@@ -20,14 +22,14 @@ namespace Codebase.Structure
             Container.Bind<GridAnalyser>().AsCached();
             Container.Bind<GridView>().AsCached();
             Container.Bind<LevelResizer>().AsCached();
-            Container.Bind<CameraResizer>().AsCached();
             Container.Bind<GamePlayProcessor>().AsCached();
-        
+
             Container.BindInterfacesAndSelfTo<LevelManager>().AsCached();
 
             Container.BindInstance(_propsConfig);
             Container.BindInstance(_propsParent);
             Container.BindInstance(_loosePopup);
+            Container.BindInstance(_levelUI);
         }
     }
 }

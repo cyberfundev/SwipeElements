@@ -21,14 +21,26 @@ namespace Codebase.Gameplay.LevelManager
         private readonly LevelModule _levelModule;
         private readonly LevelsService _levelsService;
         private readonly LoosePopup _loosePopup;
+        private readonly LevelUI _levelUI;
+        
+        private LevelState _levelState;
+        
+        private enum LevelState
+        {
+            Idle,
+            WaitingCompleteAnimation,
+            Completed,
+        }
 
         public LevelManager(GamePlayProcessor gamePlayProcessor, 
             LevelsService levelsService, 
             PlayerProfile playerProfile, 
             LevelArgs levelArgs, 
             LevelModule levelModule,
-            LoosePopup loosePopup)
+            LoosePopup loosePopup,
+            LevelUI levelUI)
         {
+            _levelUI = levelUI;
             _loosePopup = loosePopup;
             _levelsService = levelsService;
             _levelModule = levelModule;
@@ -42,10 +54,33 @@ namespace Codebase.Gameplay.LevelManager
             _playerProfile.SavedLevelState = _levelArgs.Level;
             
             _gamePlayProcessor.CreateLevel(_levelArgs.Level);
+            
+            _levelUI.OnNextClicked
+                .Subscribe(_ => GoNextLevel())
+                .AddTo(_disposables);
+            _levelUI.OnRestartClicked
+                .Subscribe(_ => RestartLevel())
+                .AddTo(_disposables);
 
-            _gamePlayProcessor.OnWinCalculated.Subscribe(_ => AppendLevelProgress(_levelsService, _playerProfile)).AddTo(_disposables);
-            _gamePlayProcessor.OnCompleted.Subscribe(_ => WinLevel()).AddTo(_disposables);
-            _gamePlayProcessor.OnLost.Subscribe(_ => LooseLevel().Forget()).AddTo(_disposables);
+
+            _gamePlayProcessor.OnWinCalculated
+                .Where(_ => _levelState is LevelState.Idle)
+                .Subscribe(_ => StartWaitLevelEndAnimate(true))
+                .AddTo(_disposables);
+            _gamePlayProcessor.OnLoseCalculated
+                .Where(_ => _levelState is LevelState.Idle)
+                .Subscribe(_ => StartWaitLevelEndAnimate(false))
+                .AddTo(_disposables);
+            _gamePlayProcessor.OnCompleted
+                .Where(_ => _levelState is LevelState.WaitingCompleteAnimation)
+                .Subscribe(_ => WinLevel())
+                .AddTo(_disposables);
+            _gamePlayProcessor.OnLost
+                .Where(_ => _levelState is LevelState.WaitingCompleteAnimation)
+                .Subscribe(_ => LooseLevel().Forget())
+                .AddTo(_disposables);
+
+            _levelState = LevelState.Idle;
         }
 
         public static void AppendLevelProgress(LevelsService levelsService, PlayerProfile playerProfile)
@@ -74,19 +109,40 @@ namespace Codebase.Gameplay.LevelManager
             _disposables = new CompositeDisposable();
         }
 
+        private void StartWaitLevelEndAnimate(bool completed)
+        {
+            _levelState = LevelState.WaitingCompleteAnimation;
+            if (completed)
+            {
+                AppendLevelProgress(_levelsService, _playerProfile);
+            }
+        }
+
         private void WinLevel()
         {
+            _levelState = LevelState.Completed;
             _levelModule.Finish(LevelResult.Win);
         }
 
         private async UniTaskVoid LooseLevel()
         {
+            _levelState = LevelState.Completed;
             switch (await _loosePopup.ShowAndWaitForResult())
             {
                 case Popup.PopupResult.Close:
                     _levelModule.Finish(LevelResult.Restart);
                     break;
             }
+        }
+
+        private void GoNextLevel()
+        {
+            _levelModule.Finish(LevelResult.Next);
+        }
+
+        private void RestartLevel()
+        {
+            _levelModule.Finish(LevelResult.Restart);
         }
     }
 }

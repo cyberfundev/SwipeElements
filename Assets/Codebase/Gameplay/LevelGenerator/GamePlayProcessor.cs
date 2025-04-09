@@ -15,10 +15,12 @@ namespace Codebase.Gameplay.LevelGenerator
         private readonly PropsContainer _propsContainer;
 
         private readonly ISubject<Unit> _onWinCalculated = new Subject<Unit>();
+        private readonly ISubject<Unit> _onLoseCalculated = new Subject<Unit>();
         private readonly ISubject<Unit> _onCompleted = new Subject<Unit>();
         private readonly ISubject<Unit> _onLost = new Subject<Unit>();
 
         public IObservable<Unit> OnWinCalculated => _onWinCalculated;
+        public IObservable<Unit> OnLoseCalculated => _onLoseCalculated;
         public IObservable<Unit> OnCompleted => _onCompleted;
         public IObservable<Unit> OnLost => _onLost;
 
@@ -41,7 +43,7 @@ namespace Codebase.Gameplay.LevelGenerator
 
         private async void ProcessSwipe(Prop swipedProp, Vector2Int direction)
         {
-            if (!_gridAnalyser.CanSwipe(swipedProp.Position, direction) || !swipedProp.Interactable)
+            if (!_gridAnalyser.CanSwipe(swipedProp.Position, direction) || swipedProp.State is not Prop.PropState.Idle)
             {
                 return;
             }
@@ -60,7 +62,7 @@ namespace Codebase.Gameplay.LevelGenerator
 
                 List<Prop> propsToDestroy = _gridAnalyser.AnalyseMerges();
 
-                SetPropsInteractable(propsToMove, false);
+                SetPropsState(propsToMove, Prop.PropState.WaitingAnimation);
 
                 if (propsToDestroy.Count > 0)
                 {
@@ -69,7 +71,7 @@ namespace Codebase.Gameplay.LevelGenerator
 
                 _propsContainer.RemoveProps(propsToDestroy);
 
-                SetPropsInteractable(propsToMove, true);
+                SetPropsState(propsToMove, Prop.PropState.Idle);
 
                 propsToMove = _gridAnalyser.UpdatePositions();
             } while (propsToMove.Count > 0);
@@ -91,6 +93,7 @@ namespace Codebase.Gameplay.LevelGenerator
 
         private void LoseLevel()
         {
+            _onLoseCalculated.OnNext(Unit.Default);
             _onLost.OnNext(Unit.Default);
         }
 
@@ -100,11 +103,11 @@ namespace Codebase.Gameplay.LevelGenerator
             _onCompleted.OnNext(Unit.Default);
         }
 
-        private static void SetPropsInteractable(List<Prop> propsToMove, bool value)
+        private static void SetPropsState(List<Prop> propsToMove, Prop.PropState state)
         {
             foreach (Prop prop in propsToMove)
             {
-                prop.SetInteractable(value);
+                prop.SetState(state);
             }
         }
     }
